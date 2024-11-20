@@ -1,16 +1,22 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
+import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
+export async function POST(request: Request) {
   try {
-    const formData = req.body
+    console.log('📨 Starting application submission process...')
+    const formData = await request.json()
     console.log('Received form data:', formData)
 
-    // Create email transporter
+    console.log('🔍 Validating environment variables...')
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.error('❌ Missing required environment variables')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    console.log('📧 Creating email transporter...')
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
@@ -21,7 +27,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     })
 
-    // Send email to applicant
+    console.log('🔄 Verifying SMTP connection...')
+    try {
+      await transporter.verify()
+      console.log('✅ SMTP connection verified successfully')
+    } catch (smtpError) {
+      console.error('❌ SMTP verification failed:', smtpError)
+      throw smtpError
+    }
+
+    console.log('📤 Sending confirmation email to applicant...')
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: formData.email,
@@ -37,8 +52,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <p>Heubert Team</p>
       `,
     })
+    console.log('✅ Applicant confirmation email sent successfully')
 
-    // Send email to admin
+    console.log('📤 Sending notification email to admin...')
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to: process.env.ADMIN_EMAIL,
@@ -139,13 +155,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         </table>
       `,
     })
+    console.log('✅ Admin notification email sent successfully')
 
-    return res.status(200).json({ success: true })
+    return NextResponse.json({ success: true })
 
   } catch (error) {
-    console.error('API Error:', error)
-    return res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Failed to process application' 
-    })
+    console.error('❌ Error during submission:', error)
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to process application' },
+      { status: 500 }
+    )
   }
 }
+
