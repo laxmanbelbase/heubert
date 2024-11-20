@@ -1,6 +1,39 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
+const EDUCATION_LEVELS = {
+  'high-school': 'High School',
+  'associate': 'Associate Degree (Diploma)',
+  'bachelor': 'Bachelor Degree',
+  'master': 'Master Degree'
+}
+
+const COUNTRIES = {
+  'au': 'Australia',
+  'np': 'Nepal',
+  'in': 'India',
+  'us': 'United States',
+  'uk': 'United Kingdom',
+  'ca': 'Canada'
+}
+
+const STATES = {
+  'nsw': 'New South Wales',
+  'vic': 'Victoria',
+  'qld': 'Queensland',
+  'wa': 'Western Australia',
+  'sa': 'South Australia',
+  'tas': 'Tasmania',
+  'act': 'Australian Capital Territory',
+  'nt': 'Northern Territory'
+}
+
+const COURSES = {
+  'helpdesk-l1': 'IT Helpdesk Support (L1) - 6 weeks',
+  'support-l2': 'IT Support and Networking (L2) - 10 weeks',
+  'cyber-security': 'Cyber Security - 10 weeks'
+}
+
 export async function POST(request: Request) {
   try {
     console.log('📨 Starting application submission process...')
@@ -90,7 +123,7 @@ export async function POST(request: Request) {
           </tr>
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>State:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.state.toUpperCase()}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${STATES[formData.state.toLowerCase()] || formData.state}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Postcode:</strong></td>
@@ -98,7 +131,11 @@ export async function POST(request: Request) {
           </tr>
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Country:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.country.toUpperCase()}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${
+              formData.country === 'other' 
+                ? formData.otherCountry 
+                : (COUNTRIES[formData.country.toLowerCase()] || formData.country)
+            }</td>
           </tr>
         </table>
 
@@ -106,7 +143,7 @@ export async function POST(request: Request) {
         <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Education Level:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.education}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${EDUCATION_LEVELS[formData.education] || formData.education}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Field of Study:</strong></td>
@@ -118,23 +155,38 @@ export async function POST(request: Request) {
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>IT Experience:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.hasITExperience.toUpperCase()}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${formData.hasITExperience === 'yes' ? 'Yes' : 'No'}</td>
           </tr>
+          ${formData.hasITExperience === 'yes' ? `
+          <tr style="background-color: #f8f9fa;">
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Years of Experience:</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${formData.yearsOfExperience} years</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd;"><strong>Current/Recent Job:</strong></td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${formData.currentJob}</td>
+          </tr>
+          ` : ''}
         </table>
 
         <h2>Course Details</h2>
         <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Selected Course:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.selectedCourse}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${COURSES[formData.selectedCourse] || formData.selectedCourse}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Intake Date:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${new Date(formData.intake).toLocaleDateString()}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${new Date(formData.intake).toLocaleDateString('en-US', { 
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}</td>
           </tr>
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Referrer:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${formData.referrer}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${formData.referrer || 'Not specified'}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Application Date:</strong></td>
