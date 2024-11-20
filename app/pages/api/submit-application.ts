@@ -1,23 +1,53 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
 
-const EDUCATION_LEVELS = {
+type StateCode = 'nsw' | 'vic' | 'qld' | 'wa' | 'sa' | 'tas' | 'act' | 'nt';
+type CountryCode = 'au' | 'np' | 'in' | 'us' | 'uk' | 'ca' | 'other';
+type EducationLevel = 'high-school' | 'associate' | 'bachelor' | 'master';
+type CourseCode = 'helpdesk-l1' | 'support-l2' | 'cyber-security';
+
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  postcode: string;
+  country: string;
+  otherCountry?: string;
+  education: string;
+  fieldOfStudy: string;
+  institution: string;
+  hasITExperience: 'yes' | 'no';
+  yearsOfExperience?: string;
+  currentJob?: string;
+  selectedCourse: string;
+  intake: string;
+  referrer?: string;
+  acceptFalseInfo: boolean;
+  acceptTerms: boolean;
+  submittedAt: string;
+}
+
+const EDUCATION_LEVELS: Record<EducationLevel, string> = {
   'high-school': 'High School',
   'associate': 'Associate Degree (Diploma)',
   'bachelor': 'Bachelor Degree',
   'master': 'Master Degree'
 }
 
-const COUNTRIES = {
+const COUNTRIES: Record<CountryCode, string> = {
   'au': 'Australia',
   'np': 'Nepal',
   'in': 'India',
   'us': 'United States',
   'uk': 'United Kingdom',
-  'ca': 'Canada'
+  'ca': 'Canada',
+  'other': 'Other'
 }
 
-const STATES = {
+const STATES: Record<StateCode, string> = {
   'nsw': 'New South Wales',
   'vic': 'Victoria',
   'qld': 'Queensland',
@@ -28,7 +58,7 @@ const STATES = {
   'nt': 'Northern Territory'
 }
 
-const COURSES = {
+const COURSES: Record<CourseCode, string> = {
   'helpdesk-l1': 'IT Helpdesk Support (L1) - 6 weeks',
   'support-l2': 'IT Support and Networking (L2) - 10 weeks',
   'cyber-security': 'Cyber Security - 10 weeks'
@@ -37,7 +67,7 @@ const COURSES = {
 export async function POST(request: Request) {
   try {
     console.log('📨 Starting application submission process...')
-    const formData = await request.json()
+    const formData = await request.json() as FormData
     console.log('Received form data:', formData)
 
     console.log('🔍 Validating environment variables...')
@@ -123,7 +153,9 @@ export async function POST(request: Request) {
           </tr>
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>State:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${STATES[formData.state.toLowerCase()] || formData.state}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${
+              STATES[formData.state.toLowerCase() as StateCode] || formData.state
+            }</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Postcode:</strong></td>
@@ -132,9 +164,9 @@ export async function POST(request: Request) {
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Country:</strong></td>
             <td style="padding: 8px; border: 1px solid #ddd;">${
-              formData.country === 'other' 
-                ? formData.otherCountry 
-                : (COUNTRIES[formData.country.toLowerCase()] || formData.country)
+              formData.country === 'other'
+                ? formData.otherCountry
+                : (COUNTRIES[formData.country.toLowerCase() as CountryCode] || formData.country)
             }</td>
           </tr>
         </table>
@@ -143,7 +175,9 @@ export async function POST(request: Request) {
         <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Education Level:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${EDUCATION_LEVELS[formData.education] || formData.education}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${
+              EDUCATION_LEVELS[formData.education as EducationLevel] || formData.education
+            }</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Field of Study:</strong></td>
@@ -173,7 +207,9 @@ export async function POST(request: Request) {
         <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
           <tr style="background-color: #f8f9fa;">
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Selected Course:</strong></td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${COURSES[formData.selectedCourse] || formData.selectedCourse}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${
+              COURSES[formData.selectedCourse as CourseCode] || formData.selectedCourse
+            }</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd;"><strong>Intake Date:</strong></td>
